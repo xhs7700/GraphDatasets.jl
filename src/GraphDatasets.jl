@@ -35,7 +35,16 @@ function loadUndiKONECT(internal_name::AbstractString, name::AbstractString)
     tar_bytes = transcode(Bzip2Decompressor, take!(bz_io))
     dir_path = mktempdir()
     Tar.extract(IOBuffer(tar_bytes), dir_path)
-    file_path = joinpath(dir_path, internal_name, "out.$internal_name")
+    file_dir = joinpath(dir_path, internal_name)
+    file_path = nothing
+    for file_name in readdir(file_dir)
+        if startswith(file_name, "out.")
+            file_path = joinpath(file_dir, file_name)
+        end
+    end
+    if isnothing(file_path)
+        error("cannot find graph file in $file_dir.")
+    end
     g = GeneralGraph{Int}(() -> 1, name, file_path)
     rm(dir_path; recursive=true)
     return g
