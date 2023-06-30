@@ -7,6 +7,7 @@ using Tar, TranscodingStreams, CodecBzip2, CodecZlib
 using ProgressBars
 
 export loadUndiKONECT, loadUndiSNAP
+export loadPseudofractal, loadKoch, loadCayleyTree, loadHanoiExt
 
 function callback(desc::AbstractString)
     pbar = Ref{ProgressBar}()
@@ -60,5 +61,97 @@ function loadUndiSNAP(url::AbstractString, name::AbstractString)
 end
 
 loadUndiSNAP(url::AbstractString) = loadUndiSNAP(url, "UndiSNAP")
+
+function loadPseudofractal(g::Int)
+    edges = Tuple{Int,Int}[(1, 2), (1, 3), (2, 3)]
+    N = 3
+    for _ in 1:g
+        new_edges = Tuple{Int,Int}[]
+        for (u, v) in edges
+            N += 1
+            push!(new_edges, (u, N), (v, N))
+        end
+        append!(edges, new_edges)
+    end
+    return GeneralGraph("Pseudofractal_$g", Set(1:N), Dict(edge => one(Int) for edge in edges))
+end
+
+function loadKoch(g::Int)
+    triangles = Tuple{Int,Int,Int}[(1, 2, 3)]
+    N = 3
+    for _ in 1:g
+        new_triangles = Tuple{Int,Int,Int}[]
+        for triangle in triangles, u in triangle
+            push!(new_triangles, (u, N + 1, N + 2))
+            N += 2
+        end
+        append!(triangles, new_triangles)
+    end
+    edges = Dict{Tuple{Int,Int},Int}()
+    for (x, y, z) in triangles
+        edges[(x, y)] = 1
+        edges[(x, z)] = 1
+        edges[(y, z)] = 1
+    end
+    return GeneralGraph("Koch_$g", Set(1:N), edges)
+end
+
+function loadCayleyTree(b::Int, g::Int)
+    edges = Dict{Tuple{Int,Int},Int}()
+    leafs = Int[]
+    for leaf in 2:b+1
+        edges[(1, leaf)] = 1
+        push!(leafs, leaf)
+    end
+    N = b + 1
+    for _ in 2:g
+        new_leafs = Int[]
+        for leaf in leafs
+            for new_leaf in N+1:N+b-1
+                edges[(leaf, new_leaf)] = 1
+                push!(new_leafs, new_leaf)
+            end
+            N += b - 1
+        end
+        leafs = new_leafs
+    end
+    return GeneralGraph("CayleyTree_$(b)_$(g)", Set(1:N), edges)
+end
+
+function loadHanoiExt(g::Int)
+    edges = Tuple{Int,Int}[(1, 2), (1, 3), (2, 3)]
+    inc = 1
+    for i in 2:g-1
+        inc *= 3
+        new_edges = Tuple{Int,Int}[]
+        for (u, v) in edges
+            push!(new_edges, (u + inc, v + inc), (u + 2 * inc, v + 2 * inc))
+        end
+        append!(edges, new_edges)
+        for x in 0:2
+            y = (x + 1) % 3
+            u = parse(Int, string(x) * repeat(string(y), i - 1), base=3) + 1
+            v = parse(Int, string(y) * repeat(string(x), i - 1), base=3) + 1
+            push!(edges, (u, v))
+        end
+    end
+    inc *= 3
+    new_edges = Tuple{Int,Int}[]
+    for (u, v) in edges
+        push!(new_edges, (u + inc, v + inc), (u + 2 * inc, v + 2 * inc), (u + 3 * inc, v + 3 * inc))
+    end
+    append!(edges, new_edges)
+    for x in 0:2
+        y = (x + 1) % 3
+        u = parse(Int, string(x) * repeat(string(y), g - 1), base=3) + 1
+        v = parse(Int, string(y) * repeat(string(x), g - 1), base=3) + 1
+        push!(edges, (u, v))
+        u = parse(Int, repeat(string(x), g), base=3) + 1
+        v = parse(Int, "10" * repeat(string(x), g - 1), base=3) + 1
+        push!(edges, (u, v))
+    end
+    N = 4 * 3^(g - 1)
+    return GeneralGraph("HanoiExt_$g", Set(1:N), Dict(edge => one(Int) for edge in edges))
+end
 
 end # module GraphDatasets
