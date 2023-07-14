@@ -280,15 +280,17 @@ The Kemeny constant of ``A_g`` is
 """
 function loadApollo(g::Int)
     triangles = NTuple{3,Int}[(1, 2, 3), (1, 2, 4), (1, 3, 4), (2, 3, 4)]
+    active_triangles = copy(triangles)
     N = 4
     for _ in 1:g
         new_triangles = NTuple{3,Int}[]
-        sizehint!(new_triangles, 3 * length(triangles))
-        for (x, y, z) in triangles
+        sizehint!(new_triangles, 3 * length(active_triangles))
+        for (x, y, z) in active_triangles
             N += 1
             push!(new_triangles, (x, y, N), (x, z, N), (y, z, N))
         end
         append!(triangles, new_triangles)
+        active_triangles = new_triangles
     end
     edges = Dict{Tuple{Int,Int},Int}()
     for (x, y, z) in triangles
