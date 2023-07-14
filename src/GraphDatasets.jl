@@ -112,7 +112,7 @@ end
 @doc raw"""
     loadCorona(q,g)
 
-Generate the GeneralGraph object of the edge corona project of ``q``-Clique ``G_q(g)``.
+Generate the GeneralGraph object of the edge corona project of ``(q+2)``-Clique ``G_q(g)``.
 
 The number of vertices and edges of ``G_q(g)`` is ``\frac{2}{q+3}\left(\frac{(q+1)(q+2)}{2}\right)^{g+1} + \frac{2q+4}{q+3}`` and ``\left(\frac{(q+1)(q+2)}{2}\right)^{g+1}``.
 
@@ -123,6 +123,7 @@ The Kemeny constant of ``G_q(g)`` is
 ```
 """
 function loadCorona(q::Int, g::Int)
+    q += 2
     edges = Tuple{Int,Int}[]
     N = q
     for u in 1:q, v in u+1:q
