@@ -7,7 +7,7 @@ using Tar, TranscodingStreams, CodecBzip2, CodecZlib
 using ProgressBars
 
 export loadUndiKONECT, loadUndiSNAP
-export loadPseudofractal, loadKoch, loadCayleyTree, loadHanoiExt
+export loadPseudofractal, loadKoch, loadCayleyTree, loadHanoiExt, loadApollo, loadPseudoExt, load3CayleyTree
 
 function callback(desc::AbstractString)
     pbar = Ref{ProgressBar}()
@@ -62,18 +62,25 @@ end
 
 loadUndiSNAP(url::AbstractString) = loadUndiSNAP(url, "UndiSNAP")
 
-function loadPseudofractal(g::Int)
+loadPseudofractal(g::Int) = _loadPseudoExt(1, g, "Pseudofractal_$g")
+
+loadPseudoExt(m::Int, g::Int) = _loadPseudoExt(m, g, "PseudoExt_$(m)_$g")
+
+function _loadPseudoExt(m::Int, g::Int, name::AbstractString)
     edges = Tuple{Int,Int}[(1, 2), (1, 3), (2, 3)]
     N = 3
     for _ in 1:g
-        new_edges = Tuple{Int,Int}[]
+        new_edges = Tuple{Int,Int}()
+        sizehint!(new_edges, 2 * m * length(edges))
         for (u, v) in edges
-            N += 1
-            push!(new_edges, (u, N), (v, N))
+            for _ in 1:m
+                N += 1
+                push!(new_edges, (u, N), (v, N))
+            end
         end
         append!(edges, new_edges)
     end
-    return GeneralGraph("Pseudofractal_$g", Set(1:N), Dict(edge => one(Int) for edge in edges))
+    return GeneralGraph(name, Set(1:N), Dict(edge => one(Int) for edge in edges))
 end
 
 function loadKoch(g::Int)
@@ -81,6 +88,7 @@ function loadKoch(g::Int)
     N = 3
     for _ in 1:g
         new_triangles = Tuple{Int,Int,Int}[]
+        sizehint!(new_triangles, 3 * length(triangles))
         for triangle in triangles, u in triangle
             push!(new_triangles, (u, N + 1, N + 2))
             N += 2
@@ -95,6 +103,8 @@ function loadKoch(g::Int)
     end
     return GeneralGraph("Koch_$g", Set(1:N), edges)
 end
+
+load3CayleyTree(g::Int) = loadCayleyTree(3, g)
 
 function loadCayleyTree(b::Int, g::Int)
     edges = Dict{Tuple{Int,Int},Int}()
@@ -152,6 +162,40 @@ function loadHanoiExt(g::Int)
     end
     N = 4 * 3^(g - 1)
     return GeneralGraph("HanoiExt_$g", Set(1:N), Dict(edge => one(Int) for edge in edges))
+end
+
+@doc raw"""
+    loadApollo(g)
+
+Generate the GeneralGraph object of the Apollonian network ``A_g``.
+
+The number of vertices and edges of ``A_g`` is ``2\times 3^g+2`` and ``6\times 3^g``.
+
+The Kemeny constant of ``A_g`` is
+
+```math
+1+\frac{1}{12}\left( 32\times 3^g-16\left(\frac{9}{5}\right)^g +11 \right).
+```
+"""
+function loadApollo(g::Int)
+    triangles = NTuple{3,Int}[(1, 2, 3), (1, 2, 4), (1, 3, 4), (2, 3, 4)]
+    N = 4
+    for _ in 1:g
+        new_triangles = NTuple{3,Int}[]
+        sizehint!(new_triangles, 3 * length(triangles))
+        for (x, y, z) in triangles
+            N += 1
+            push!(new_triangles, (x, y, N), (x, z, N), (y, z, N))
+        end
+        append!(triangles, new_triangles)
+    end
+    edges = Dict{Tuple{Int,Int},Int}()
+    for (x, y, z) in triangles
+        edges[(x, y)] = 1
+        edges[(x, z)] = 1
+        edges[(y, z)] = 1
+    end
+    return GeneralGraph("Apollo_$g", Set(1:N), edges)
 end
 
 end # module GraphDatasets
