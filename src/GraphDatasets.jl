@@ -7,7 +7,7 @@ using Tar, TranscodingStreams, CodecBzip2, CodecZlib
 using ProgressBars
 
 export loadUndiKONECT, loadUndiSNAP
-export loadPseudofractal, loadKoch, loadCayleyTree, loadHanoiExt, loadApollo, loadPseudoExt, load3CayleyTree
+export loadPseudofractal, loadKoch, loadCayleyTree, loadHanoiExt, loadApollo, loadPseudoExt, load3CayleyTree, loadCorona
 
 function callback(desc::AbstractString)
     pbar = Ref{ProgressBar}()
@@ -62,15 +62,41 @@ end
 
 loadUndiSNAP(url::AbstractString) = loadUndiSNAP(url, "UndiSNAP")
 
+@doc raw"""
+    loadPseudofractal(g)
+
+Generate the GeneralGraph object of the pseudofractal network ``F_g``.
+
+The number of vertices and edges of ``F_g`` is ``\left(3^{g+1} + 3\right) / 2`` and ``3^{g+1}``.
+
+The Kemeny constant of ``F_g`` is
+
+```math
+\frac{5}{2}\times 3^g - \frac{5}{3}\times 2^g + \frac{1}{2}.
+```
+"""
 loadPseudofractal(g::Int) = _loadPseudoExt(1, g, "Pseudofractal_$g")
 
+@doc raw"""
+    loadPseudoExt(m,g)
+
+Generate the GeneralGraph object of the extended pseudofractal network ``F_{m,g}``.
+
+The number of vertices and edges of ``F_{m,g}`` is ``3\times\left( (2m+1)^g + 1\right) / 2`` and ``3\times(2m+1)^g``.
+
+The Kemeny constant of ``F_{m,g}`` is
+
+```math
+1 + \frac{1}{30m\left(2m+1\right)}\times\left( 8 + 25m + 18m^2 + (135m+90m^2)(1+2m)^g - (28m^2+120m+8)\left(\frac{2+4m}{2+m}\right)^g \right).
+```
+"""
 loadPseudoExt(m::Int, g::Int) = _loadPseudoExt(m, g, "PseudoExt_$(m)_$g")
 
 function _loadPseudoExt(m::Int, g::Int, name::AbstractString)
     edges = Tuple{Int,Int}[(1, 2), (1, 3), (2, 3)]
     N = 3
     for _ in 1:g
-        new_edges = Tuple{Int,Int}()
+        new_edges = Tuple{Int,Int}[]
         sizehint!(new_edges, 2 * m * length(edges))
         for (u, v) in edges
             for _ in 1:m
@@ -83,6 +109,55 @@ function _loadPseudoExt(m::Int, g::Int, name::AbstractString)
     return GeneralGraph(name, Set(1:N), Dict(edge => one(Int) for edge in edges))
 end
 
+@doc raw"""
+    loadCorona(q,g)
+
+Generate the GeneralGraph object of the edge corona project of ``q``-Clique ``G_q(g)``.
+
+The number of vertices and edges of ``G_q(g)`` is ``\frac{2}{q+3}\left(\frac{(q+1)(q+2)}{2}\right)^{g+1} + \frac{2q+4}{q+3}`` and ``\left(\frac{(q+1)(q+2)}{2}\right)^{g+1}``.
+
+The Kemeny constant of ``G_q(g)`` is
+
+```math
+\left(\frac{(q+1)^2}{q+2} - \frac{3q+3}{2}\right)\times (q+1)^g + \frac{(q+1)(3q+7)}{2q+6}\times\left(\frac{(q+1)(q+2)}{2}\right)^g + \frac{q+1}{q+3}
+```
+"""
+function loadCorona(q::Int, g::Int)
+    edges = Tuple{Int,Int}[]
+    N = q
+    for u in 1:q, v in u+1:q
+        push!(edges, (u, v))
+    end
+    for _ in 1:g
+        new_edges = Tuple{Int,Int}[]
+        sizehint!(new_edges, (2 * q + q * (q - 1) ÷ 2) * length(edges))
+        for (u, v) in edges
+            for x in 1:q
+                push!(new_edges, (u, N + x), (v, N + x))
+            end
+            for x in 1:q, y in x+1:q
+                push!(new_edges, (N + x, N + y))
+            end
+            N += q
+        end
+        append!(edges, new_edges)
+    end
+    return GeneralGraph(name, Set(1:N), Dict(edge => one(Int) for edge in edges))
+end
+
+@doc raw"""
+    loadKoch(g)
+
+Generate the GeneralGraph object of the Koch network ``M_g``.
+
+The number of vertices and edges of ``M_g`` is ``2\times 4^g +1`` and ``3\times 4^g``.
+
+The Kemeny constant of ``M_g`` is
+
+```math
+\left(1 + 2g\right)\times 4^g + \frac{1}{3}.
+```
+"""
 function loadKoch(g::Int)
     triangles = Tuple{Int,Int,Int}[(1, 2, 3)]
     N = 3
@@ -104,6 +179,19 @@ function loadKoch(g::Int)
     return GeneralGraph("Koch_$g", Set(1:N), edges)
 end
 
+@doc raw"""
+    load3CayleyTree(g)
+
+Generate the GeneralGraph object of the 3-Cayley Tree ``C_{3,g}``.
+
+The number of vertices and edges of ``C_{3,g}`` is ``3\times 2^{g-2}`` and ``3\times 2^{g-2} - 1``.
+
+The Kemeny constant of ``C_{3,g}`` is
+
+```math
+\frac{3g\times 4^{g+1} - 13\times 2^{2g+1} + 35\times 2^g - 9}{2\left(2^g - 1\right)}.
+```
+"""
 load3CayleyTree(g::Int) = loadCayleyTree(3, g)
 
 function loadCayleyTree(b::Int, g::Int)
@@ -128,6 +216,19 @@ function loadCayleyTree(b::Int, g::Int)
     return GeneralGraph("CayleyTree_$(b)_$(g)", Set(1:N), edges)
 end
 
+@doc raw"""
+    loadHanoiExt(g)
+
+Generate the GeneralGraph object of the extended Hanoi graph ``\tilde{H}_g``.
+
+The number of vertices and edges of ``\tilde{H}_g`` is ``4\times 3^{g-1}`` and ``2\times 3^g``.
+
+The Kemeny constant of ``\tilde{H}_g`` is
+
+```math
+\frac{32\times 5^g\times 3^{g-1}-64\times 3^{2g-2}-2\times 3^g}{10\left( 3^g+3^{g-1}-1 \right)}.
+```
+"""
 function loadHanoiExt(g::Int)
     edges = Tuple{Int,Int}[(1, 2), (1, 3), (2, 3)]
     inc = 1
