@@ -185,7 +185,7 @@ end
 
 Generate the GeneralGraph object of the 3-Cayley Tree ``C_{3,g}``.
 
-The number of vertices and edges of ``C_{3,g}`` is ``3\times 2^{g-2}`` and ``3\times 2^{g-2} - 1``.
+The number of vertices and edges of ``C_{3,g}`` is ``3\times 2^g - 2`` and ``3\times 2^g - 3``.
 
 The Kemeny constant of ``C_{3,g}`` is
 
