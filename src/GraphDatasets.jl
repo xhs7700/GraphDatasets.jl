@@ -123,10 +123,9 @@ The Kemeny constant of ``G_q(g)`` is
 ```
 """
 function loadCorona(q::Int, g::Int)
-    q += 2
     edges = Tuple{Int,Int}[]
-    N = q
-    for u in 1:q, v in u+1:q
+    N = q + 2
+    for u in 1:q+2, v in u+1:q+2
         push!(edges, (u, v))
     end
     for _ in 1:g
