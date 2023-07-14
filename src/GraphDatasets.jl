@@ -143,7 +143,7 @@ function loadCorona(q::Int, g::Int)
         end
         append!(edges, new_edges)
     end
-    return GeneralGraph(name, Set(1:N), Dict(edge => one(Int) for edge in edges))
+    return GeneralGraph("Corona_$(q)_g", Set(1:N), Dict(edge => one(Int) for edge in edges))
 end
 
 @doc raw"""
