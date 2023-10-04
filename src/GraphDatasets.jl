@@ -94,19 +94,28 @@ loadPseudoExt(m::Int, g::Int) = _loadPseudoExt(m, g, "PseudoExt_$(m)_$g")
 
 function _loadPseudoExt(m::Int, g::Int, name::AbstractString)
     edges = Tuple{Int,Int}[(1, 2), (1, 3), (2, 3)]
+    adjs = [
+        [2, 3],
+        [1, 3],
+        [1, 2],
+    ]
     N = 3
     for _ in 1:g
         new_edges = Tuple{Int,Int}[]
-        sizehint!(new_edges, 2 * m * length(edges))
-        for (u, v) in edges
+        len = length(edges)
+        sizehint!(new_edges, 2 * m * len)
+        iter = len > 1000000 ? ProgressBar(edges) : edges
+        for (u, v) in iter
             for _ in 1:m
                 N += 1
                 push!(new_edges, (u, N), (v, N))
+                push!(adjs[u], N), push!(adjs[v], N)
+                push!(adjs, [u, v])
             end
         end
         append!(edges, new_edges)
     end
-    return GeneralGraph(name, Set(1:N), Dict(edge => one(Int) for edge in edges))
+    return NormalUnweightedGraph(N, length(edges), name, adjs)
 end
 
 @doc raw"""
@@ -142,7 +151,7 @@ function loadCorona(q::Int, g::Int)
         end
         append!(edges, new_edges)
     end
-    return GeneralGraph("Corona_$(q)_g", Set(1:N), Dict(edge => one(Int) for edge in edges))
+    return GeneralGraph("Corona_$(q)_g", Set(1:N), Dict(edge => one(Int) for edge in edges)) |> NormalUnweightedGraph
 end
 
 @doc raw"""
@@ -176,7 +185,7 @@ function loadKoch(g::Int)
         edges[(x, z)] = 1
         edges[(y, z)] = 1
     end
-    return GeneralGraph("Koch_$g", Set(1:N), edges)
+    return GeneralGraph("Koch_$g", Set(1:N), edges) |> NormalUnweightedGraph
 end
 
 @doc raw"""
@@ -213,7 +222,7 @@ function loadCayleyTree(b::Int, g::Int)
         end
         leafs = new_leafs
     end
-    return GeneralGraph("CayleyTree_$(b)_$(g)", Set(1:N), edges)
+    return GeneralGraph("CayleyTree_$(b)_$(g)", Set(1:N), edges) |> NormalUnweightedGraph
 end
 
 @doc raw"""
@@ -262,7 +271,7 @@ function loadHanoiExt(g::Int)
         push!(edges, (u, v))
     end
     N = 4 * 3^(g - 1)
-    return GeneralGraph("HanoiExt_$g", Set(1:N), Dict(edge => one(Int) for edge in edges))
+    return GeneralGraph("HanoiExt_$g", Set(1:N), Dict(edge => one(Int) for edge in edges)) |> NormalUnweightedGraph
 end
 
 @doc raw"""
@@ -279,26 +288,32 @@ The Kemeny constant of ``A_g`` is
 ```
 """
 function loadApollo(g::Int)
+    name = "Apollo_$g"
     triangles = NTuple{3,Int}[(1, 2, 3), (1, 2, 4), (1, 3, 4), (2, 3, 4)]
     active_triangles = copy(triangles)
-    N = 4
+    adjs = [
+        [2, 3, 4],
+        [1, 3, 4],
+        [1, 2, 4],
+        [1, 2, 3],
+    ]
+    N, M = 4, 6
     for _ in 1:g
         new_triangles = NTuple{3,Int}[]
-        sizehint!(new_triangles, 3 * length(active_triangles))
-        for (x, y, z) in active_triangles
+        len = length(active_triangles)
+        sizehint!(new_triangles, 3 * len)
+        iter = len > 1000000 ? ProgressBar(active_triangles) : active_triangles
+        for (x, y, z) in iter
             N += 1
             push!(new_triangles, (x, y, N), (x, z, N), (y, z, N))
+            push!(adjs[x], N), push!(adjs[y], N), push!(adjs[z], N)
+            push!(adjs, [x, y, z])
         end
+        M += length(new_triangles)
         append!(triangles, new_triangles)
         active_triangles = new_triangles
     end
-    edges = Dict{Tuple{Int,Int},Int}()
-    for (x, y, z) in triangles
-        edges[(x, y)] = 1
-        edges[(x, z)] = 1
-        edges[(y, z)] = 1
-    end
-    return GeneralGraph("Apollo_$g", Set(1:N), edges)
+    return NormalUnweightedGraph(N, M, name, adjs)
 end
 
 end # module GraphDatasets
