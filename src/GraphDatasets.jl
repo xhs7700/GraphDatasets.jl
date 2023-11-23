@@ -7,6 +7,7 @@ using Tar, TranscodingStreams, CodecBzip2, CodecZlib
 using ProgressBars
 
 export loadUndiKONECT, loadUndiSNAP
+export loadDiKONECT, loadDiSNAP
 export loadPseudofractal, loadKoch, loadCayleyTree, loadHanoiExt, loadApollo, loadPseudoExt, load3CayleyTree, loadCorona
 
 function callback(desc::AbstractString)
@@ -29,7 +30,7 @@ function callback(desc::AbstractString)
     end
 end
 
-function loadUndiKONECT(internal_name::AbstractString, name::AbstractString)
+function get_konect_path(internal_name::AbstractString)
     url = "http://konect.cc/files/download.tsv.$internal_name.tar.bz2"
     bz_io = IOBuffer()
     Downloads.download(url, bz_io; progress=callback(internal_name))
@@ -46,12 +47,26 @@ function loadUndiKONECT(internal_name::AbstractString, name::AbstractString)
     if isnothing(file_path)
         error("cannot find graph file in $file_dir.")
     end
+    dir_path, file_path
+end
+
+function loadUndiKONECT(internal_name::AbstractString, name::AbstractString)
+    dir_path, file_path = get_konect_path(internal_name)
     g = GeneralGraph{Int}(() -> 1, name, file_path)
     rm(dir_path; recursive=true)
     return g
 end
 
 loadUndiKONECT(internal_name::AbstractString) = loadUndiKONECT(internal_name, internal_name)
+
+function loadDiKONECT(internal_name::AbstractString, name::AbstractString)
+    dir_path, file_path = get_konect_path(internal_name)
+    g = GeneralDiGraph{Int}(() -> 1, name, file_path)
+    rm(dir_path; recursive=true)
+    g
+end
+
+loadDiKONECT(internal_name::AbstractString) = loadDiKONECT(internal_name, internal_name)
 
 function loadUndiSNAP(url::AbstractString, name::AbstractString)
     gzip_io = IOBuffer()
@@ -61,6 +76,15 @@ function loadUndiSNAP(url::AbstractString, name::AbstractString)
 end
 
 loadUndiSNAP(url::AbstractString) = loadUndiSNAP(url, "UndiSNAP")
+
+function loadDiSNAP(url::AbstractString, name::AbstractString)
+    gzip_io = IOBuffer()
+    Downloads.download(url, gzip_io; progress=callback(name))
+    txt_bytes = transcode(GzipDecompressor, take!(gzip_io))
+    GeneralDiGraph{Int}(() -> 1, name, IOBuffer(txt_bytes))
+end
+
+loadDiSNAP(url::AbstractString) = loadDiSNAP(url, "DiSNAP")
 
 @doc raw"""
     loadPseudofractal(g)
