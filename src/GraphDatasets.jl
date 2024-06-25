@@ -91,7 +91,15 @@ function loadUndiSNAP(url::AbstractString, name::AbstractString)
     return GeneralGraph{Int}(() -> 1, name, IOBuffer(txt_bytes))
 end
 
+function loadUndiSNAP(::Type{T}, url::AbstractString, name::AbstractString) where {T<:Real}
+    gzip_io = IOBuffer()
+    Downloads.download(url, gzip_io; progress=callback(name))
+    txt_bytes = transcode(GzipDecompressor, take!(gzip_io))
+    return GeneralGraph{T}(name, IOBuffer(txt_bytes))
+end
+
 loadUndiSNAP(url::AbstractString) = loadUndiSNAP(url, "UndiSNAP")
+loadUndiSNAP(::Type{T}, url::AbstractString) = loadUndiSNAP(T, url, "UndiSNAP") where {T<:Real}
 
 function loadDiSNAP(url::AbstractString, name::AbstractString)
     gzip_io = IOBuffer()
@@ -100,7 +108,15 @@ function loadDiSNAP(url::AbstractString, name::AbstractString)
     GeneralDiGraph{Int}(() -> 1, name, IOBuffer(txt_bytes))
 end
 
+function loadDiSNAP(::Type{T}, url::AbstractString, name::AbstractString) where {T<:Real}
+    gzip_io = IOBuffer()
+    Downloads.download(url, gzip_io; progress=callback(name))
+    txt_bytes = transcode(GzipDecompressor, take!(gzip_io))
+    GeneralDiGraph{T}(name, IOBuffer(txt_bytes))
+end
+
 loadDiSNAP(url::AbstractString) = loadDiSNAP(url, "DiSNAP")
+loadDiSNAP(::Type{T}, url::AbstractString) = loadDiSNAP(T, url, "DiSNAP") where {T<:Real}
 
 @doc raw"""
     loadPseudofractal(g)
