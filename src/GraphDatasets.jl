@@ -57,7 +57,15 @@ function loadUndiKONECT(internal_name::AbstractString, name::AbstractString)
     return g
 end
 
+function loadUndiKONECT(::Type{T}, internal_name::AbstractString, name::AbstractString) where {T<:Real}
+    dir_path, file_path = get_konect_path(internal_name)
+    g = GeneralGraph{T}(name, file_path)
+    rm(dir_path; recursive=true)
+    g
+end
+
 loadUndiKONECT(internal_name::AbstractString) = loadUndiKONECT(internal_name, internal_name)
+loadUndiKONECT(::Type{T}, internal_name::AbstractString) where {T<:Real} = loadUndiKONECT(T, internal_name, internal_name)
 
 function loadDiKONECT(internal_name::AbstractString, name::AbstractString)
     dir_path, file_path = get_konect_path(internal_name)
@@ -66,7 +74,15 @@ function loadDiKONECT(internal_name::AbstractString, name::AbstractString)
     g
 end
 
+function loadDiKONECT(::Type{T}, internal_name::AbstractString, name::AbstractString) where {T<:Real}
+    dir_path, file_path = get_konect_path(internal_name)
+    g = GeneralDiGraph{Int}(() -> 1, name, file_path)
+    rm(dir_path; recursive=true)
+    g
+end
+
 loadDiKONECT(internal_name::AbstractString) = loadDiKONECT(internal_name, internal_name)
+loadDiKONECT(::Type{T}, internal_name::AbstractString) where {T<:Real} = loadDiKONECT(T, internal_name, internal_name)
 
 function loadUndiSNAP(url::AbstractString, name::AbstractString)
     gzip_io = IOBuffer()
