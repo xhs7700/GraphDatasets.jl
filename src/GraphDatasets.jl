@@ -99,7 +99,7 @@ function loadUndiSNAP(::Type{T}, url::AbstractString, name::AbstractString) wher
 end
 
 loadUndiSNAP(url::AbstractString) = loadUndiSNAP(url, "UndiSNAP")
-loadUndiSNAP(::Type{T}, url::AbstractString) = loadUndiSNAP(T, url, "UndiSNAP") where {T<:Real}
+loadUndiSNAP(::Type{T}, url::AbstractString) where {T<:Real} = loadUndiSNAP(T, url, "UndiSNAP")
 
 function loadDiSNAP(url::AbstractString, name::AbstractString)
     gzip_io = IOBuffer()
@@ -116,7 +116,7 @@ function loadDiSNAP(::Type{T}, url::AbstractString, name::AbstractString) where 
 end
 
 loadDiSNAP(url::AbstractString) = loadDiSNAP(url, "DiSNAP")
-loadDiSNAP(::Type{T}, url::AbstractString) = loadDiSNAP(T, url, "DiSNAP") where {T<:Real}
+loadDiSNAP(::Type{T}, url::AbstractString) where {T<:Real} = loadDiSNAP(T, url, "DiSNAP")
 
 @doc raw"""
     loadPseudofractal(g)
