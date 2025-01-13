@@ -6,7 +6,7 @@ using Downloads
 using Tar, TranscodingStreams, CodecBzip2, CodecZlib, ZipArchives
 using ProgressBars
 
-export loadUndiKONECT, loadUndiSNAP
+export loadUndiKONECT, loadUndiSNAP, loadUndiNetworkRepo
 export loadDiKONECT, loadDiSNAP
 export loadPseudofractal, loadKoch, loadCayleyTree, loadHanoiExt, loadApollo, loadPseudoExt, load3CayleyTree, loadCorona
 
