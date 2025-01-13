@@ -12,3 +12,10 @@ ProgressBars = "49802e3a-d2f1-5c88-81d8-b72133a6f568"
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 Tar = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
 TranscodingStreams = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
+ZipArchives = "49080126-0e18-4c2a-b176-c102e4b3760c"
+
+[compat]
+CodecBzip2 = "0.8.5"
+CodecZlib = "0.7.6"
+GeneralGraphs = "0.1.5"
+ZipArchives = "2.4.0"

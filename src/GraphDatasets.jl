@@ -3,7 +3,7 @@ module GraphDatasets
 using GeneralGraphs
 using Base.Filesystem
 using Downloads
-using Tar, TranscodingStreams, CodecBzip2, CodecZlib
+using Tar, TranscodingStreams, CodecBzip2, CodecZlib, ZipArchives
 using ProgressBars
 
 export loadUndiKONECT, loadUndiSNAP
@@ -83,6 +83,45 @@ end
 
 loadDiKONECT(internal_name::AbstractString) = loadDiKONECT(internal_name, internal_name)
 loadDiKONECT(::Type{T}, internal_name::AbstractString) where {T<:Real} = loadDiKONECT(T, internal_name, internal_name)
+
+function _loadUndiNetworkRepo(prefix::String, internal_name::String, name::String)
+    url = "https://nrvis.com/download/data/$(prefix)/$(internal_name).zip"
+    zip_io = IOBuffer()
+    try
+        Downloads.download(url, zip_io; progress=callback(name))
+    catch e
+        println("Failed to download $internal_name through the URL $url.")
+        throw(e)
+    end
+    reader = ZipReader(take!(zip_io))
+    lines_list = String[]
+    for i in 1:zip_nentries(reader)
+        # .mtx file may contain metadata without comment character, which is currently not a problem.
+        if endswith(zip_name(reader, i), ".mtx")
+            push!(lines_list, zip_readentry(reader, i, String))
+        elseif endswith(zip_name(reader, i), ".edges")
+            push!(lines_list, zip_readentry(reader, i, String))
+        end
+    end
+    IOBuffer(join(strip.(lines_list), "\n"))
+end
+
+function loadUndiNetworkRepo(prefix::String, internal_name::String, name::String)
+    io = _loadUndiNetworkRepo(prefix, internal_name, name)
+    g = GeneralGraph{Int}(() -> 1, name, io)
+    close(io)
+    g
+end
+
+function loadUndiNetworkRepo(::Type{T}, prefix::String, internal_name::String, name::String) where {T<:Real}
+    io = _loadUndiNetworkRepo(prefix, internal_name, name)
+    g = GeneralGraph{T}(name, io)
+    close(io)
+    g
+end
+
+loadUndiNetworkRepo(prefix::String, internal_name::String) = loadUndiNetworkRepo(prefix, internal_name, internal_name)
+loadUndiNetworkRepo(::Type{T}, prefix::String, internal_name::String) where {T<:Real} = loadUndiNetworkRepo(T, prefix, internal_name, internal_name)
 
 function loadUndiSNAP(url::AbstractString, name::AbstractString)
     gzip_io = IOBuffer()
